@@ -1,33 +1,65 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type {
   PlaylistsResponse,
   FetchPlaylistsArgs,
-} from "@/features/playlists/api/playlistsApi.types";
+  CreatePlaylistArgs,
+  PlaylistData,
+  UpdatePlaylistArgs,
+} from "@/features/playlists/api/playlistsApi.types"
 
-// `createApi` - функция из `RTK Query`, позволяющая создать объект `API`
-// для взаимодействия с внешними `API` и управления состоянием приложения
 export const playlistsApi = createApi({
-  // `reducerPath` - имя куда будут сохранены состояние и экшены для этого `API`
   reducerPath: "playlistsApi",
-  // `baseQuery` - конфигурация для `HTTP-клиента`, который будет использоваться для отправки запросов
+  // обертка над нативным fetch
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_BASE_URL,
+    // api-key будет улетать c каждым запросом в заголовках (headers)
     headers: {
       "API-KEY": import.meta.env.VITE_API_KEY,
     },
+    // прикрепляет к каждому запросу accesss-token
+    prepareHeaders: headers => {
+      headers.set("Authorization", `Bearer ${import.meta.env.VITE_ACCESS_TOKEN}`)
+      return headers
+    },
   }),
-  // `endpoints` - метод, возвращающий объект с эндпоинтами для `API`, описанными
-  // с помощью функций, которые будут вызываться при вызове соответствующих методов `API`
-  // (например `get`, `post`, `put`, `patch`, `delete`)
-  endpoints: (build) => ({
-    // Типизация аргументов (<возвращаемый тип, тип query аргументов (`QueryArg`)>)
-    // `query` по умолчанию создает запрос `get` и указание метода необязательно
+  // аналог instance из axios
+  endpoints: build => ({
+    // GET-запрос (получение плейлистов)
     fetchPlaylists: build.query<PlaylistsResponse, void>({
       query: () => `playlists`,
     }),
+    // POST-запрос (создания плейлиста)
+    createPlaylist: build.mutation<{ data: PlaylistData }, CreatePlaylistArgs>({
+      query: body => ({
+        method: "post",
+        url: "playlists",
+        body,
+      }),
+    }),
+    // DELETE-запрос (удаление плейлиста)
+    deletePlaylist: build.mutation<void, PlaylistData["id"]>({
+      query: playlistId => ({
+        method: "delete",
+        url: `playlists/${playlistId}`,
+      }),
+    }),
+    // PUT-запрос (изменение плейлиста)
+    updatePlaylist: build.mutation<
+      void,
+      { playlistId: PlaylistData["id"]; body: UpdatePlaylistArgs }
+    >({
+      query: ({ playlistId, body }) => ({
+        method: "put",
+        url: `playlists/${playlistId}`,
+        body,
+      }),
+    }),
   }),
-});
+})
 
-// `createApi` создает объект `API`, который содержит все эндпоинты в виде хуков,
-// определенные в свойстве `endpoints`
-export const { useFetchPlaylistsQuery } = playlistsApi;
+export const {
+  useFetchPlaylistsQuery,
+  useCreatePlaylistMutation,
+  useDeletePlaylistMutation,
+  useUpdatePlaylistMutation,
+} = playlistsApi
