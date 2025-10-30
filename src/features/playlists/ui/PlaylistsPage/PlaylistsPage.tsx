@@ -11,6 +11,8 @@ import type {
   UpdatePlaylistArgs,
 } from "@/features/playlists/api/playlistsApi.types"
 import { useState } from "react"
+import { PlaylistItem } from "../PlaylistItem/PlaylistItem"
+import { EditPlaylistForm } from "../EditPlaylistForm/EditPlaylistForm"
 
 export const PlaylistsPage = () => {
   // храним id обновляемого плейлиста
@@ -20,7 +22,6 @@ export const PlaylistsPage = () => {
   const { data } = useFetchPlaylistsQuery()
 
   const [deletePlaylist] = useDeletePlaylistMutation()
-  const [updatePlaylist] = useUpdatePlaylistMutation()
 
   // callback-функция обработчик события удаления плейлиста
   const deletePlaylistHandler = (playlistId: string) => {
@@ -29,6 +30,7 @@ export const PlaylistsPage = () => {
     }
   }
 
+  // обработчик события обновления плейлиста
   const editPlaylistHandler = (playlist: PlaylistData | null) => {
     if (playlist) {
       setPlaylistId(playlist.id)
@@ -40,19 +42,6 @@ export const PlaylistsPage = () => {
     } else {
       setPlaylistId(null)
     }
-  }
-
-  const onSubmit: SubmitHandler<UpdatePlaylistArgs> = body => {
-    // раннее прерывание, если playlistId === null
-    if (!playlistId) return
-
-    // обновляем данные плейлиста
-    updatePlaylist({
-      playlistId,
-      body,
-    }).then(() => {
-      setPlaylistId(null)
-    })
   }
 
   return (
@@ -68,29 +57,19 @@ export const PlaylistsPage = () => {
           return (
             <div className={s.item} key={playlist.id}>
               {isEditing ? (
-                <form onSubmit={handleSubmit(onSubmit)}>
-                  <h2>Edit playlist</h2>
-                  <div>
-                    <input {...register("title")} placeholder={"title"} />
-                  </div>
-                  <div>
-                    <input {...register("description")} placeholder={"description"} />
-                  </div>
-                  <button type={"submit"}>save</button>
-                  <button type={"button"} onClick={() => editPlaylistHandler(null)}>
-                    cancel
-                  </button>
-                </form>
+                <EditPlaylistForm
+                  playlistId={playlistId}
+                  setPlaylistId={setPlaylistId}
+                  editPlaylist={editPlaylistHandler}
+                  handleSubmit={handleSubmit}
+                  register={register}
+                />
               ) : (
-                <div>
-                  <div>title: {playlist.attributes.title}</div>
-                  <div>description: {playlist.attributes.description}</div>
-                  <div>userName: {playlist.attributes.user.name}</div>
-                  <button onClick={() => deletePlaylistHandler(playlist.id)}>
-                    delete
-                  </button>
-                  <button onClick={() => editPlaylistHandler(playlist)}>update</button>
-                </div>
+                <PlaylistItem
+                  playlist={playlist}
+                  deletePlaylistHandler={deletePlaylistHandler}
+                  editPlaylistHandler={editPlaylistHandler}
+                />
               )}
             </div>
           )
