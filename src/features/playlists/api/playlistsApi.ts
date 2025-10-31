@@ -1,4 +1,3 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type {
   PlaylistsResponse,
   FetchPlaylistsArgs,
@@ -6,24 +5,9 @@ import type {
   PlaylistData,
   UpdatePlaylistArgs,
 } from "@/features/playlists/api/playlistsApi.types"
+import { baseApi } from "@/app/api/baseApi"
 
-export const playlistsApi = createApi({
-  reducerPath: "playlistsApi",
-  // обертка над нативным fetch
-  baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_BASE_URL,
-    // api-key будет улетать c каждым запросом в заголовках (headers)
-    headers: {
-      "API-KEY": import.meta.env.VITE_API_KEY,
-    },
-    // прикрепляет к каждому запросу accesss-token
-    prepareHeaders: headers => {
-      headers.set("Authorization", `Bearer ${import.meta.env.VITE_ACCESS_TOKEN}`)
-      return headers
-    },
-  }),
-  tagTypes: ["Playlist"],
-  // аналог instance из axios
+export const playlistsApi = baseApi.injectEndpoints({
   endpoints: build => ({
     // GET-запрос (получение плейлистов)
     fetchPlaylists: build.query<PlaylistsResponse, void>({
