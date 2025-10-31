@@ -22,11 +22,13 @@ export const playlistsApi = createApi({
       return headers
     },
   }),
+  tagTypes: ["Playlist"],
   // аналог instance из axios
   endpoints: build => ({
     // GET-запрос (получение плейлистов)
     fetchPlaylists: build.query<PlaylistsResponse, void>({
       query: () => `playlists`,
+      providesTags: ["Playlist"],
     }),
     // POST-запрос (создания плейлиста)
     createPlaylist: build.mutation<{ data: PlaylistData }, CreatePlaylistArgs>({
@@ -35,6 +37,7 @@ export const playlistsApi = createApi({
         url: "playlists",
         body,
       }),
+      invalidatesTags: ["Playlist"],
     }),
     // DELETE-запрос (удаление плейлиста)
     deletePlaylist: build.mutation<void, PlaylistData["id"]>({
@@ -42,6 +45,7 @@ export const playlistsApi = createApi({
         method: "delete",
         url: `playlists/${playlistId}`,
       }),
+      invalidatesTags: ["Playlist"],
     }),
     // PUT-запрос (изменение плейлиста)
     updatePlaylist: build.mutation<
@@ -53,6 +57,7 @@ export const playlistsApi = createApi({
         url: `playlists/${playlistId}`,
         body,
       }),
+      invalidatesTags: ["Playlist"],
     }),
   }),
 })
