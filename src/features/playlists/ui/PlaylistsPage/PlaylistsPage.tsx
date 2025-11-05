@@ -1,45 +1,32 @@
 import s from "./PlaylistsPage.module.css"
-import { useDeletePlaylistMutation, useFetchPlaylistsQuery } from "@/features/playlists/api/playlistsApi"
+import { useFetchPlaylistsQuery } from "@/features/playlists/api/playlistsApi"
 import { CreatePlaylistForm } from "@/features/playlists/ui/CreatePlaylistForm/CreatePlaylistForm.tsx"
-import { useForm } from "react-hook-form"
-import type { PlaylistData, UpdatePlaylistArgs } from "@/features/playlists/api/playlistsApi.types"
-import { useState } from "react"
-import { PlaylistItem } from "../PlaylistItem/PlaylistItem"
-import { EditPlaylistForm } from "../EditPlaylistForm/EditPlaylistForm"
+import { useState, type ChangeEvent } from "react"
 import { useDebounceValue } from "@/common/hooks"
+import { Pagination } from "@/common/components"
+import { PlaylistsList } from "../PlaylistsList/PlaylistsList"
 
 export const PlaylistsPage = () => {
-  // храним id обновляемого плейлиста
-  const [playlistId, setPlaylistId] = useState<string | null>(null)
   // храним текущий искомый плейлист
   const [search, setSearch] = useState("")
-
-  const { register, handleSubmit, reset } = useForm<UpdatePlaylistArgs>()
+  // храним номер текущей страницы (пагинация)
+  const [currentPage, setCurrentPage] = useState(1)
+  // храним кол-во отображаемых (на одной странице) плейлистов
+  const [pageSize, setPageSize] = useState(4)
 
   const debounceSearch = useDebounceValue(search)
-  const { data, isLoading } = useFetchPlaylistsQuery({ search: debounceSearch })
+  const { data, isLoading } = useFetchPlaylistsQuery({ search: debounceSearch, pageNumber: currentPage, pageSize })
 
-  const [deletePlaylist] = useDeletePlaylistMutation()
-
-  // callback-функция обработчик события удаления плейлиста
-  const deletePlaylistHandler = (playlistId: string) => {
-    if (confirm("Are you sure you want to delete the playlist?")) {
-      deletePlaylist(playlistId)
-    }
+  // обработчик события изменение кол-ва отображаемых (на одной странице) плейлистов
+  const changePageSizeHandler = (size: number) => {
+    setPageSize(size)
+    setCurrentPage(1)
   }
 
-  // обработчик события обновления плейлиста
-  const editPlaylistHandler = (playlist: PlaylistData | null) => {
-    if (playlist) {
-      setPlaylistId(playlist.id)
-      reset({
-        title: playlist.attributes.title,
-        description: playlist.attributes.description,
-        tagIds: playlist.attributes.tags.map(tag => tag.id),
-      })
-    } else {
-      setPlaylistId(null)
-    }
+  // обработчик события поиск плейлиста (из поисковой строки)
+  const searchPlaylistHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.currentTarget.value)
+    setCurrentPage(1)
   }
 
   return (
@@ -48,35 +35,17 @@ export const PlaylistsPage = () => {
       <CreatePlaylistForm />
 
       {/* Строка поиска плейлиста */}
-      <input type="search" placeholder={"Search playlist by title"} onChange={e => setSearch(e.currentTarget.value)} />
+      <input type="search" placeholder={"Search playlist by title"} onChange={e => searchPlaylistHandler(e)} />
 
-      <div className={s.items}>
-        {!data?.data.length && !isLoading && <h2>Playlists not found</h2>}
-        {data?.data.map(playlist => {
-          // есть ли среди всех плейлистов тот, который надо обновить
-          const isEditing = playlist.id === playlistId
+      <PlaylistsList playlists={data?.data || []} isPlaylistsLoading={isLoading} />
 
-          return (
-            <div className={s.item} key={playlist.id}>
-              {isEditing ? (
-                <EditPlaylistForm
-                  playlistId={playlistId}
-                  setPlaylistId={setPlaylistId}
-                  editPlaylist={editPlaylistHandler}
-                  handleSubmit={handleSubmit}
-                  register={register}
-                />
-              ) : (
-                <PlaylistItem
-                  playlist={playlist}
-                  deletePlaylistHandler={deletePlaylistHandler}
-                  editPlaylistHandler={editPlaylistHandler}
-                />
-              )}
-            </div>
-          )
-        })}
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        pagesCount={data?.meta.pagesCount || 1}
+        pageSize={pageSize}
+        changePageSize={changePageSizeHandler}
+      />
     </div>
   )
 }
