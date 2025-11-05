@@ -1,25 +1,23 @@
 import s from "./PlaylistsPage.module.css"
-import {
-  useDeletePlaylistMutation,
-  useFetchPlaylistsQuery,
-  useUpdatePlaylistMutation,
-} from "@/features/playlists/api/playlistsApi"
+import { useDeletePlaylistMutation, useFetchPlaylistsQuery } from "@/features/playlists/api/playlistsApi"
 import { CreatePlaylistForm } from "@/features/playlists/ui/CreatePlaylistForm/CreatePlaylistForm.tsx"
-import { useForm, type SubmitHandler } from "react-hook-form"
-import type {
-  PlaylistData,
-  UpdatePlaylistArgs,
-} from "@/features/playlists/api/playlistsApi.types"
+import { useForm } from "react-hook-form"
+import type { PlaylistData, UpdatePlaylistArgs } from "@/features/playlists/api/playlistsApi.types"
 import { useState } from "react"
 import { PlaylistItem } from "../PlaylistItem/PlaylistItem"
 import { EditPlaylistForm } from "../EditPlaylistForm/EditPlaylistForm"
+import { useDebounceValue } from "@/common/hooks"
 
 export const PlaylistsPage = () => {
   // храним id обновляемого плейлиста
   const [playlistId, setPlaylistId] = useState<string | null>(null)
+  // храним текущий искомый плейлист
+  const [search, setSearch] = useState("")
 
   const { register, handleSubmit, reset } = useForm<UpdatePlaylistArgs>()
-  const { data } = useFetchPlaylistsQuery()
+
+  const debounceSearch = useDebounceValue(search)
+  const { data, isLoading } = useFetchPlaylistsQuery({ search: debounceSearch })
 
   const [deletePlaylist] = useDeletePlaylistMutation()
 
@@ -49,7 +47,11 @@ export const PlaylistsPage = () => {
       <h1>Playlists page</h1>
       <CreatePlaylistForm />
 
+      {/* Строка поиска плейлиста */}
+      <input type="search" placeholder={"Search playlist by title"} onChange={e => setSearch(e.currentTarget.value)} />
+
       <div className={s.items}>
+        {!data?.data.length && !isLoading && <h2>Playlists not found</h2>}
         {data?.data.map(playlist => {
           // есть ли среди всех плейлистов тот, который надо обновить
           const isEditing = playlist.id === playlistId
