@@ -8,5 +8,5 @@ export const store = configureStore({
   },
   middleware: getDefaultMiddleware => getDefaultMiddleware().concat(baseApi.middleware),
 })
-
+// для работы refetchOnFocus, refetchOnReconnect
 setupListeners(store.dispatch)

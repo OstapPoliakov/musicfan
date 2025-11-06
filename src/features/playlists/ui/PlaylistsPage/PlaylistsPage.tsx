@@ -15,7 +15,14 @@ export const PlaylistsPage = () => {
   const [pageSize, setPageSize] = useState(4)
 
   const debounceSearch = useDebounceValue(search)
-  const { data, isLoading } = useFetchPlaylistsQuery({ search: debounceSearch, pageNumber: currentPage, pageSize })
+  const { data, isLoading } = useFetchPlaylistsQuery(
+    { search: debounceSearch, pageNumber: currentPage, pageSize },
+    {
+      refetchOnReconnect: true, // перезапрос данных при возврате из режима офлайн
+      //pollingInterval: 3000,        // перезапрос данных каждые 3000 мс
+      //skipPollingIfUnfocused: true, // (если текущая вкладка не в фокусе, то не делать запросы)
+    }
+  )
 
   // обработчик события изменение кол-ва отображаемых (на одной странице) плейлистов
   const changePageSizeHandler = (size: number) => {
