@@ -5,6 +5,7 @@ import { useState, type ChangeEvent } from "react"
 import { useDebounceValue } from "@/common/hooks"
 import { Pagination } from "@/common/components"
 import { PlaylistsList } from "../PlaylistsList/PlaylistsList"
+import { toast } from "react-toastify"
 
 export const PlaylistsPage = () => {
   // храним текущий искомый плейлист
@@ -15,7 +16,7 @@ export const PlaylistsPage = () => {
   const [pageSize, setPageSize] = useState(4)
 
   const debounceSearch = useDebounceValue(search)
-  const { data, isLoading, isFetching, status } = useFetchPlaylistsQuery(
+  const { data, isLoading } = useFetchPlaylistsQuery(
     { search: debounceSearch, pageNumber: currentPage, pageSize },
     {
       refetchOnReconnect: true, // перезапрос данных при возврате из режима офлайн
@@ -23,8 +24,6 @@ export const PlaylistsPage = () => {
       //skipPollingIfUnfocused: true, // (если текущая вкладка не в фокусе, то не делать запросы)
     }
   )
-
-  console.log({ isLoading, isFetching, status })
 
   // обработчик события изменение кол-ва отображаемых (на одной странице) плейлистов
   const changePageSizeHandler = (size: number) => {

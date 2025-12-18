@@ -1,9 +1,8 @@
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query"
-//import { tokenReceived, loggedOut } from './authSlice'
 import { Mutex } from "async-mutex"
 import { baseQuery } from "./baseQuery"
 import { AUTH_KEYS } from "@/common/constants"
-import { isTokens } from "@/common/utils"
+import { handleErrors, isTokens } from "@/common/utils"
 import { baseApi } from "./baseApi"
 
 // create a new mutex
@@ -19,7 +18,9 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, Fetch
 
   let result = await baseQuery(args, api, extraOptions)
 
+  // handle error 401
   if (result.error && result.error.status === 401) {
+    debugger
     // checking whether the mutex is locked
     if (!mutex.isLocked()) {
       const release = await mutex.acquire()
@@ -53,10 +54,9 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, Fetch
     }
   }
 
-  // handle 401
+  // handle other errors
   if (result.error && result.error.status !== 401) {
-    //handleErrors(result.error)
-    console.log(result.error)
+    handleErrors(result.error)
   }
 
   return result
