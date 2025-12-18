@@ -1,0 +1,38 @@
+import { Path } from "@/common/routing"
+import { useLoginMutation } from "../../api/authApi"
+
+export const Login = () => {
+  const [login] = useLoginMutation()
+
+  const loginHandler = () => {
+    debugger
+    const redirectUri = import.meta.env.VITE_DOMAIN_ADDRESS + Path.OAuthRedirect
+    const url = `${import.meta.env.VITE_BASE_URL}/auth/oauth-redirect?callbackUrl=${redirectUri}`
+
+    window.open(url, "oauthPopup", "width=500, height=600")
+
+    const recieveMessage = (event: MessageEvent) => {
+      // раннее прерывание, если popup был открыт не на нашем доменном адресе
+      if (event.origin !== import.meta.env.VITE_DOMAIN_ADDRESS) return
+
+      const { code } = event.data
+      // если code не пришел - раннее прерывание
+      if (!code) return
+
+      window.removeEventListener("message", recieveMessage)
+      login({
+        code,
+        redirectUri,
+        rememberMe: false,
+      })
+    }
+
+    window.addEventListener("message", recieveMessage)
+  }
+
+  return (
+    <button type="button" onClick={loginHandler}>
+      login
+    </button>
+  )
+}
